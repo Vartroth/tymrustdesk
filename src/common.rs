@@ -2515,7 +2515,27 @@ pub fn rustdesk_interval(i: Interval) -> ThrottledInterval {
     ThrottledInterval::new(i)
 }
 
+fn load_tymrustdesk_settings() {
+    let server = config::RENDEZVOUS_SERVERS[0];
+    let mut settings = config::OVERWRITE_SETTINGS.write().unwrap();
+    for (k, v) in [
+        (keys::OPTION_CUSTOM_RENDEZVOUS_SERVER, server),
+        (keys::OPTION_RELAY_SERVER, server),
+        (keys::OPTION_API_SERVER, ""),
+        (keys::OPTION_KEY, config::RS_PUB_KEY),
+        (keys::OPTION_ALLOW_AUTO_UPDATE, "N"),
+    ] {
+        settings.insert(k.to_owned(), v.to_owned());
+    }
+    drop(settings);
+    config::OVERWRITE_LOCAL_SETTINGS
+        .write()
+        .unwrap()
+        .insert(keys::OPTION_ENABLE_CHECK_UPDATE.to_owned(), "N".to_owned());
+}
+
 pub fn load_custom_client() {
+    load_tymrustdesk_settings();
     #[cfg(debug_assertions)]
     if let Ok(data) = std::fs::read_to_string("./custom.txt") {
         read_custom_client(data.trim());
@@ -3110,6 +3130,25 @@ mod tests {
         self,
         time::{interval, interval_at, sleep, Duration, Instant, Interval},
     };
+
+    #[test]
+    fn tymrustdesk_settings_pin_server_and_disable_updates() {
+        load_custom_client();
+        assert_eq!(
+            Config::get_option(keys::OPTION_CUSTOM_RENDEZVOUS_SERVER),
+            "tymsoftware.com"
+        );
+        assert_eq!(Config::get_option(keys::OPTION_RELAY_SERVER), "tymsoftware.com");
+        assert_eq!(Config::get_option(keys::OPTION_KEY), config::RS_PUB_KEY);
+        assert!(crate::ui_interface::is_option_fixed(
+            keys::OPTION_CUSTOM_RENDEZVOUS_SERVER
+        ));
+        assert!(!config::option2bool(
+            keys::OPTION_ENABLE_CHECK_UPDATE,
+            &LocalConfig::get_option(keys::OPTION_ENABLE_CHECK_UPDATE)
+        ));
+        assert!(!Config::get_bool_option(keys::OPTION_ALLOW_AUTO_UPDATE));
+    }
 
     #[test]
     fn relay_uuid_rejects_control_bytes_but_not_other_id_formats() {

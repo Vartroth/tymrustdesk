@@ -82,6 +82,7 @@ void showServerSettingsWithValue(
   RxString relayServerMsg = ''.obs;
   RxString apiServerMsg = ''.obs;
 
+  final isFixed = isOptionFixed('custom-rendezvous-server');
   final controllers = [idCtrl, relayCtrl, apiCtrl, keyCtrl];
   final errMsgs = [
     idServerMsg,
@@ -147,10 +148,12 @@ void showServerSettingsWithValue(
       title: Row(
         children: [
           Expanded(child: Text(translate('ID/Relay Server'))),
-          ...ServerConfigImportExportWidgets(controllers, errMsgs),
+          if (!isFixed) ...ServerConfigImportExportWidgets(controllers, errMsgs),
         ],
       ),
-      content: ConstrainedBox(
+      content: AbsorbPointer(
+        absorbing: isFixed,
+        child: ConstrainedBox(
         constraints: const BoxConstraints(minWidth: 500),
         child: Form(
           child: Obx(() => Column(
@@ -199,11 +202,12 @@ void showServerSettingsWithValue(
                 ],
               )),
         ),
-      ),
+      )),
       actions: [
         dialogButton('Cancel', onPressed: () {
           close();
         }, isOutline: true),
+        if (!isFixed)
         dialogButton(
           'OK',
           onPressed: () async {
