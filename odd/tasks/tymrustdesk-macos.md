@@ -19,10 +19,10 @@ Branch: feat/tymrustdesk-macos on base c50ae9751 (submodule libs/hbb_common on l
 - T4 [S4] inline — bridge codegen per arch (inside build script) — done
 - T5 [S3] inline — arm64 .dmg (min macOS 12.3) — see T10
 - T6 [S3] inline — x86_64 .dmg cross-built on arm64 (min macOS 12.0) — see T10
-- T7 [S1,S2] inline — smoke check: launch, bundle id, log shows tymsoftware.com:21116 — done (pre-incident), redo after rebuild
+- T7 [S1,S2] inline — smoke check: launch, bundle id, log shows tymsoftware.com:21116 — done (redone after incident)
 - T8 [S5] inline — branding: vector redraw res/tymrustdesk/*.svg → AppIcon.icns, res/mac-icon.png, flutter/assets/icon.png, res/mac-tray-dark-x2.png — done
 - T9 [S6] inline — load_tymrustdesk_settings() in src/common.rs hooked in load_custom_client; server dialog read-only when fixed; privacy/web/download/copyright — done (RED→GREEN observed pre-incident)
-- T10 [S3,S6] inline — res/tymrustdesk/build-macos.sh + rebuild both dmgs — in progress (rebuild after incident)
+- T10 [S3,S6] inline — res/tymrustdesk/build-macos.sh + rebuild both dmgs — done in the fork clone: dist/tymrustdesk-1.5.3-{aarch64,x86_64}.dmg verified (privacy URL, no rustdesk.com/privacy, TYM Software, bundle id, arch, signature, --version 1.5.3), live x86_64 connect to tymsoftware.com:21116
 
 ## Log
 
@@ -37,4 +37,6 @@ Branch: feat/tymrustdesk-macos on base c50ae9751 (submodule libs/hbb_common on l
 - L9: Flutter 3.24.5 builds x86_64 fine on Xcode 27 (FLUTTER_XCODE_ARCHS=x86_64, ONLY_ACTIVE_ARCH=NO).
 - L10 (2026-11-20): user answers swapped URLs (privacy=/privacy is 404, web=/politica-de-privacidad); verified with curl, user confirmed the correction. Left untouched: "Powered by RustDesk" attribution and AGPL license text, rustdesk.com/pricing (only shown on the public server), mobile pages (not built). With an empty api-server the client tries http://tymsoftware.com:21114/api/sysinfo and falls back to TCP 21116 (warning only on OSS).
 - L11 (2026-11-20): "cuando ejecuto me dice que falta 1 permiso de recording audio y ya esta" — microphone permission is optional (only for sending audio); ad-hoc signed rebuilds make macOS forget TCC grants.
+- L14 (2026-11-20): fork master ships a newer apply_flutter_3.44_source_patches.sh that also edits flutter/lib/common/widgets/dialog.dart (selectAllOnFocus, 3.44-only); the script did not revert it, so the following x86_64 build (Flutter 3.24.5) failed. Added the file to temp_files; rebuild OK. Rust lib suite 260/260 passed on the reconstructed branch before the rebase.
+- L13 (2026-11-20): user forked to /Users/adrian/projects/app/tymrustdesk (origin git@github.com:Vartroth/tymrustdesk.git). Branch rebased cleanly onto fork master 144a743d0 (7 upstream commits ahead). User chose "Fork de hbb_common": .gitmodules → https://github.com/Vartroth/hbb_common; submodule commit bb9d282 pushed to Vartroth/hbb_common branch tymrustdesk; feat/tymrustdesk-macos pushed to origin (user-authorized). Fresh clone + submodule init verified.
 - L12 (2026-11-20): "lo ha borrado un limpiador" — the whole repo (unpushed commits, local submodule commit, dist/, user's logo.png) was deleted by a cleaner app; no Time Machine or local snapshots. ~/sdk toolchain and the SVG sources in the session temp dir survived. Re-cloned upstream at the same base and reapplied every change verbatim.

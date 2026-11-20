@@ -28,7 +28,8 @@ export PATH="$sdk/nasm-2.16.03:/opt/homebrew/opt/rustup/bin:$HOME/.cargo/bin:/op
 export LIBCLANG_PATH=/opt/homebrew/opt/llvm/lib
 export CPATH="$(xcrun --show-sdk-path)/usr/include"
 
-temp_files=(Cargo.toml build.py flutter/lib/common.dart flutter/macos/Podfile
+temp_files=(Cargo.toml build.py flutter/lib/common.dart flutter/lib/common/widgets/dialog.dart
+  flutter/macos/Podfile
   flutter/macos/Podfile.lock flutter/macos/Runner.xcodeproj
   flutter/pubspec.yaml flutter/pubspec.lock)
 if [[ -n "$(git status --porcelain -- "${temp_files[@]}")" ]]; then
