@@ -8,6 +8,10 @@
 #   and vcpkg (VCPKG_ROOT) holding arm64-osx and x64-osx under installed/.
 # Temporary source edits (Flutter 3.44 patch, deployment targets, pubspec)
 # are reverted on exit; the script refuses to run if those files are dirty.
+#
+# Signing: ad-hoc by default. Set SIGN_IDENTITY (e.g. "Developer ID
+# Application: ...") to sign with hardened runtime, and NOTARY_PROFILE (a
+# `xcrun notarytool store-credentials` profile) to also notarize and staple.
 set -euo pipefail
 
 arch=${1:-}
@@ -91,6 +95,10 @@ for bin in "$app/Contents/MacOS/tymrustdesk" "$app/Contents/MacOS/service" \
   [[ "$(lipo -archs "$bin")" == "$arch" ]] || { echo "$bin is not $arch" >&2; exit 1; }
 done
 
+if [[ -n "${SIGN_IDENTITY:-}" ]]; then
+  bash .github/scripts/sign-macos-app.sh "$app" "$SIGN_IDENTITY" \
+    flutter/macos/Runner/Release.entitlements
+else
 # Ad-hoc signature without hardened runtime: with --options runtime, dyld
 # rejects the ad-hoc signed FlutterMacOS.framework ("different Team IDs").
 sign() { codesign --force --sign - "$@"; }
@@ -103,6 +111,7 @@ done < <(find "$app/Contents/Frameworks" -depth -type d -name '*.framework' -pri
 sign "$app/Contents/MacOS/service"
 sign --entitlements flutter/macos/Runner/Release.entitlements "$app"
 codesign --verify --deep --strict "$app"
+fi
 
 mkdir -p dist
 dmg="dist/tymrustdesk-$version-$dmg_arch.dmg"
@@ -110,4 +119,12 @@ rm -f "$dmg"
 create-dmg --volname "tymrustdesk Installer" --icon "tymrustdesk.app" 200 190 \
   --hide-extension "tymrustdesk.app" --window-size 800 400 \
   --app-drop-link 600 185 "$dmg" "$app"
+if [[ -n "${SIGN_IDENTITY:-}" ]]; then
+  codesign --force --timestamp --sign "$SIGN_IDENTITY" "$dmg"
+  if [[ -n "${NOTARY_PROFILE:-}" ]]; then
+    xcrun notarytool submit "$dmg" --keychain-profile "$NOTARY_PROFILE" --wait
+    xcrun stapler staple "$dmg"
+    spctl --assess --type open --context context:primary-signature -v "$dmg"
+  fi
+fi
 echo "Built $dmg"

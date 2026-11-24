@@ -9,6 +9,7 @@ Branch: feat/tymrustdesk-macos on base c50ae9751 (submodule libs/hbb_common on l
 - S4: Build route: "Compilar localmente" (user choice; no CI fork).
 - S5: Branding: "ademas quiero poner mi logo" / "tengo una imagen logo.png puedes generar las imagenes que necesites a partir de esa".
 - S6: "hay que dejar la info de conmexion y politica de privacidad y todo lo configurable de rustdesk con los datos de tymsoftware.com". Decisions: privacy https://tymsoftware.com/politica-de-privacidad; web/downloads https://tymsoftware.com; copyright "TYM Software"; server OSS (hbbs/hbbr, no API); network settings "Visibles y bloqueados"; updates "Desactivarla".
+- S7: Signing: "soy desarrollador de apple, quiero firmarlo". Identity "Developer ID Application: MyD Bajo Aragon SL (8K4TBXTC7H)", notarytool keychain profile "tymrustdesk".
 - Assumption: bundle id com.tymsoftware.tymrustdesk (not specified by user).
 
 ## Tasks
@@ -22,6 +23,7 @@ Branch: feat/tymrustdesk-macos on base c50ae9751 (submodule libs/hbb_common on l
 - T7 [S1,S2] inline — smoke check: launch, bundle id, log shows tymsoftware.com:21116 — done (redone after incident)
 - T8 [S5] inline — branding: vector redraw res/tymrustdesk/*.svg → AppIcon.icns, res/mac-icon.png, flutter/assets/icon.png, res/mac-tray-dark-x2.png — done
 - T9 [S6] inline — load_tymrustdesk_settings() in src/common.rs hooked in load_custom_client; server dialog read-only when fixed; privacy/web/download/copyright — done (RED→GREEN observed pre-incident)
+- T11 [S7] inline — SIGN_IDENTITY / NOTARY_PROFILE in build-macos.sh (reuses .github/scripts/sign-macos-app.sh); both dmgs notarized, stapled, spctl "Notarized Developer ID" — done
 - T10 [S3,S6] inline — res/tymrustdesk/build-macos.sh + rebuild both dmgs — done in the fork clone: dist/tymrustdesk-1.5.3-{aarch64,x86_64}.dmg verified (privacy URL, no rustdesk.com/privacy, TYM Software, bundle id, arch, signature, --version 1.5.3), live x86_64 connect to tymsoftware.com:21116
 
 ## Log
@@ -40,3 +42,5 @@ Branch: feat/tymrustdesk-macos on base c50ae9751 (submodule libs/hbb_common on l
 - L14 (2026-11-20): fork master ships a newer apply_flutter_3.44_source_patches.sh that also edits flutter/lib/common/widgets/dialog.dart (selectAllOnFocus, 3.44-only); the script did not revert it, so the following x86_64 build (Flutter 3.24.5) failed. Added the file to temp_files; rebuild OK. Rust lib suite 260/260 passed on the reconstructed branch before the rebase.
 - L13 (2026-11-20): user forked to /Users/adrian/projects/app/tymrustdesk (origin git@github.com:Vartroth/tymrustdesk.git). Branch rebased cleanly onto fork master 144a743d0 (7 upstream commits ahead). User chose "Fork de hbb_common": .gitmodules → https://github.com/Vartroth/hbb_common; submodule commit bb9d282 pushed to Vartroth/hbb_common branch tymrustdesk; feat/tymrustdesk-macos pushed to origin (user-authorized). Fresh clone + submodule init verified.
 - L12 (2026-11-20): "lo ha borrado un limpiador" — the whole repo (unpushed commits, local submodule commit, dist/, user's logo.png) was deleted by a cleaner app; no Time Machine or local snapshots. ~/sdk toolchain and the SVG sources in the session temp dir survived. Re-cloned upstream at the same base and reapplied every change verbatim.
+- L15 (2026-11-23): "soy desarrollador de apple, quiero firmarlo". Xcode refused Developer ID ("only the Account Holder") although App Store Connect shows Account Holder for team MyD Bajo Aragon SL; Xcode showed only Admin. Cert created on developer.apple.com with a Keychain-generated CSR. With a real identity, hardened runtime works (the ad-hoc "different Team IDs" issue does not apply).
+- L16 (2026-11-24): the notarytool keychain profile vanished between the arm64 and x86_64 runs (cause unknown, possibly the cleaner app); user re-stored it and the already-signed x86_64 dmg was notarized without rebuilding. Both dmgs: status Accepted, stapled, spctl source=Notarized Developer ID.
